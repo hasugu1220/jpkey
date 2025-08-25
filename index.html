@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 가상 키보드 (카톡 공유)</title>
+    <title>일본어 가상 키보드 v4 (드래그 입력)</title>
     <style>
         * {
             margin: 0;
@@ -19,6 +19,7 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            user-select: none;
         }
 
         .container {
@@ -27,7 +28,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             padding: 30px;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
         }
 
         h1 {
@@ -38,12 +39,12 @@
         }
 
         .input-section {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .text-area {
             width: 100%;
-            min-height: 120px;
+            height: 60px;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 10px;
@@ -155,6 +156,7 @@
             justify-content: center;
             position: relative;
             user-select: none;
+            touch-action: manipulation;
         }
 
         .key:hover {
@@ -164,9 +166,11 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .key:active {
-            transform: translateY(0);
+        .key.pressed {
             background: #bbdefb;
+            transform: translateY(0) scale(1.05);
+            border-color: #1976d2;
+            box-shadow: 0 0 20px rgba(25, 118, 210, 0.4);
         }
 
         .key.has-variants::after {
@@ -196,6 +200,23 @@
             background: #5a6fd8;
         }
 
+        .convert-key {
+            background: #ff6b6b;
+            color: white;
+            font-weight: 600;
+            font-size: 20px;
+            min-width: 80px;
+            position: relative;
+        }
+
+        .convert-key:hover {
+            background: #ff5252;
+        }
+
+        .convert-key:active {
+            background: #f44336;
+        }
+
         .wide-key {
             min-width: 150px;
         }
@@ -204,106 +225,124 @@
             display: none;
         }
 
-        /* 팝업 스타일 */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.3);
-            display: none;
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .popup-overlay.active {
-            display: flex;
-        }
-
-        .popup {
+        /* 드래그 선택 팝업 */
+        .drag-selector {
+            position: absolute;
             background: white;
+            border: 3px solid #667eea;
             border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            min-width: 300px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s ease-out;
         }
 
-        .popup-title {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
+        .drag-selector.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
         }
 
-        .popup-grid {
+        .selector-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
+            gap: 8px;
         }
 
-        .popup-key {
+        .selector-char {
             background: #f8f9fa;
             border: 2px solid #e9ecef;
             border-radius: 8px;
-            padding: 15px 10px;
+            padding: 10px;
             text-align: center;
-            cursor: pointer;
-            font-size: 20px;
+            font-size: 18px;
             font-family: 'Noto Sans JP', sans-serif;
-            transition: all 0.2s;
-            min-height: 60px;
+            min-width: 40px;
+            min-height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            transition: all 0.1s;
         }
 
-        .popup-key:hover {
-            background: #e3f2fd;
-            border-color: #2196f3;
-            transform: scale(1.05);
+        .selector-char:hover,
+        .selector-char.highlighted {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
         }
 
-        .popup-key.dakuten {
+        .selector-char.dakuten {
             background: #ffecb3;
             border-color: #ff9800;
         }
 
-        .popup-key.handakuten {
+        .selector-char.dakuten:hover,
+        .selector-char.dakuten.highlighted {
+            background: #ff9800;
+            color: white;
+        }
+
+        .selector-char.handakuten {
             background: #e1f5fe;
             border-color: #03a9f4;
         }
 
-        .popup-key.small {
+        .selector-char.handakuten:hover,
+        .selector-char.handakuten.highlighted {
+            background: #03a9f4;
+            color: white;
+        }
+
+        .selector-char.small {
             background: #f3e5f5;
             border-color: #9c27b0;
         }
 
-        .close-popup {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
+        .selector-char.small:hover,
+        .selector-char.small.highlighted {
+            background: #9c27b0;
+            color: white;
         }
 
-        .close-popup:hover {
-            color: #333;
+        .info-text {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+
+        .last-input-highlight {
+            background: #fff3cd !important;
+            border-color: #ffc107 !important;
+            animation: highlightPulse 1s ease-out;
+        }
+
+        @keyframes highlightPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
             .container {
                 padding: 20px;
-                margin: 10px;
+                max-width: 100%;
             }
             
             .keyboard-grid {
-                grid-template-columns: repeat(5, 1fr);
                 gap: 10px;
             }
             
@@ -313,27 +352,55 @@
                 min-height: 60px;
             }
             
-            .popup {
-                margin: 20px;
-                min-width: 280px;
+            .selector-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
             
-            .popup-grid {
-                grid-template-columns: repeat(4, 1fr);
+            .selector-char {
+                min-width: 35px;
+                min-height: 35px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .keyboard-grid {
+                gap: 8px;
+            }
+            
+            .key {
+                padding: 12px 8px;
+                font-size: 18px;
+                min-height: 50px;
+            }
+            
+            .selector-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            
+            .selector-char {
+                min-width: 30px;
+                min-height: 30px;
+                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🇯🇵 일본어 가상 키보드</h1>
+        <h1>🇯🇵 일본어 가상 키보드 v4</h1>
         
         <div class="input-section">
-            <textarea id="textInput" class="text-area" placeholder="키를 누르면 관련 문자들이 팝업으로 나타납니다..."></textarea>
+            <textarea id="textInput" class="text-area" placeholder="키를 길게 누르거나 드래그해서 문자를 선택하세요! 소문자는 문자 입력 후 소문자키 클릭!"></textarea>
             <div class="controls">
                 <button class="btn btn-primary" onclick="copyText()">📋 복사</button>
                 <button class="btn btn-secondary" onclick="clearText()">🗑️ 지우기</button>
             </div>
+        </div>
+
+        <div class="info-text">
+            💡 사용법: 키를 길게 누르고 있으면 관련 문자들이 나타납니다! 소문자는 기본 문자 입력 후 소문자키를 누르세요.
         </div>
 
         <div class="keyboard-modes">
@@ -344,24 +411,24 @@
         <!-- 히라가나 키보드 -->
         <div id="hiragana-keyboard" class="keyboard">
             <div class="keyboard-grid">
-                <div class="key has-variants" onclick="showPopup('a')">あ</div>
-                <div class="key has-variants" onclick="showPopup('ka')">か</div>
-                <div class="key has-variants" onclick="showPopup('sa')">さ</div>
-                <div class="key has-variants" onclick="showPopup('ta')">た</div>
-                <div class="key has-variants" onclick="showPopup('na')">な</div>
+                <div class="key has-variants" data-group="a">あ</div>
+                <div class="key has-variants" data-group="ka">か</div>
+                <div class="key has-variants" data-group="sa">さ</div>
+                <div class="key has-variants" data-group="ta">た</div>
+                <div class="key has-variants" data-group="na">な</div>
                 
-                <div class="key has-variants" onclick="showPopup('ha')">は</div>
-                <div class="key has-variants" onclick="showPopup('ma')">ま</div>
-                <div class="key has-variants" onclick="showPopup('ya')">や</div>
-                <div class="key has-variants" onclick="showPopup('ra')">ら</div>
-                <div class="key has-variants" onclick="showPopup('wa')">わ</div>
+                <div class="key has-variants" data-group="ha">は</div>
+                <div class="key has-variants" data-group="ma">ま</div>
+                <div class="key has-variants" data-group="ya">や</div>
+                <div class="key has-variants" data-group="ra">ら</div>
+                <div class="key has-variants" data-group="wa">わ</div>
             </div>
             
             <div class="special-keys">
                 <div class="key special-key" onclick="insertText('、')">、</div>
                 <div class="key special-key" onclick="insertText('。')">。</div>
                 <div class="key special-key" onclick="insertText('ー')">ー</div>
-                <div class="key special-key has-variants" onclick="showPopup('small')">小文字</div>
+                <div class="key convert-key" onclick="convertToSmall()">小</div>
                 <div class="key special-key wide-key" onclick="insertText(' ')">スペース</div>
                 <div class="key special-key" onclick="backspace()">⌫</div>
             </div>
@@ -370,65 +437,75 @@
         <!-- 카타카나 키보드 -->
         <div id="katakana-keyboard" class="keyboard hidden">
             <div class="keyboard-grid">
-                <div class="key has-variants" onclick="showPopup('A')">ア</div>
-                <div class="key has-variants" onclick="showPopup('KA')">カ</div>
-                <div class="key has-variants" onclick="showPopup('SA')">サ</div>
-                <div class="key has-variants" onclick="showPopup('TA')">タ</div>
-                <div class="key has-variants" onclick="showPopup('NA')">ナ</div>
+                <div class="key has-variants" data-group="A">ア</div>
+                <div class="key has-variants" data-group="KA">カ</div>
+                <div class="key has-variants" data-group="SA">サ</div>
+                <div class="key has-variants" data-group="TA">タ</div>
+                <div class="key has-variants" data-group="NA">ナ</div>
                 
-                <div class="key has-variants" onclick="showPopup('HA')">ハ</div>
-                <div class="key has-variants" onclick="showPopup('MA')">マ</div>
-                <div class="key has-variants" onclick="showPopup('YA')">ヤ</div>
-                <div class="key has-variants" onclick="showPopup('RA')">ラ</div>
-                <div class="key has-variants" onclick="showPopup('WA')">ワ</div>
+                <div class="key has-variants" data-group="HA">ハ</div>
+                <div class="key has-variants" data-group="MA">マ</div>
+                <div class="key has-variants" data-group="YA">ヤ</div>
+                <div class="key has-variants" data-group="RA">ラ</div>
+                <div class="key has-variants" data-group="WA">ワ</div>
             </div>
             
             <div class="special-keys">
                 <div class="key special-key" onclick="insertText('、')">、</div>
                 <div class="key special-key" onclick="insertText('。')">。</div>
                 <div class="key special-key" onclick="insertText('ー')">ー</div>
-                <div class="key special-key has-variants" onclick="showPopup('smallKata')">小문자</div>
+                <div class="key convert-key" onclick="convertToSmall()">小</div>
                 <div class="key special-key wide-key" onclick="insertText(' ')">スペース</div>
                 <div class="key special-key" onclick="backspace()">⌫</div>
             </div>
         </div>
     </div>
 
-    <!-- 팝업 오버레이 -->
-    <div class="popup-overlay" id="popupOverlay" onclick="closePopup()">
-        <div class="popup" onclick="event.stopPropagation()">
-            <button class="close-popup" onclick="closePopup()">×</button>
-            <div class="popup-title" id="popupTitle"></div>
-            <div class="popup-grid" id="popupGrid"></div>
-        </div>
+    <!-- 드래그 선택기 -->
+    <div class="drag-selector" id="dragSelector">
+        <div class="selector-grid" id="selectorGrid"></div>
     </div>
 
     <script>
         let currentMode = 'hiragana';
+        let isPressed = false;
+        let pressTimer = null;
+        let currentKey = null;
+        let selectorActive = false;
+        let lastInputPosition = -1;
         
+        // 기본 문자만 포함 (탁음/반탁음 포함, 소문자는 제외)
         const characterGroups = {
-            'a': { title: 'あ행', chars: ['あ', 'い', 'う', 'え', 'お'] },
-            'ka': { title: 'か행 / が행', chars: ['か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'] },
-            'sa': { title: 'さ행 / ざ행', chars: ['さ', 'し', 'す', 'せ', 'そ', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ'] },
-            'ta': { title: 'た행 / だ행', chars: ['た', 'ち', 'つ', 'て', 'と', 'だ', 'ぢ', 'づ', 'で', 'ど'] },
-            'na': { title: 'な행', chars: ['な', 'に', 'ぬ', 'ね', 'の'] },
-            'ha': { title: 'は행 / ば행 / ぱ행', chars: ['は', 'ひ', 'ふ', 'へ', 'ほ', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'] },
-            'ma': { title: 'ま행', chars: ['ま', 'み', 'む', 'め', 'も'] },
-            'ya': { title: 'や행', chars: ['や', 'ゆ', 'よ'] },
-            'ra': { title: 'ら행', chars: ['ら', 'り', 'る', 'れ', 'ろ'] },
-            'wa': { title: 'わ행 + ん', chars: ['わ', 'を', 'ん'] },
-            'small': { title: '작은 문자', chars: ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'っ', 'ゃ', 'ゅ', 'ょ'] },
-            'A': { title: 'ア행', chars: ['ア', 'イ', 'ウ', 'エ', 'オ'] },
-            'KA': { title: 'カ행 / ガ행', chars: ['カ', 'キ', 'ク', 'ケ', 'コ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ'] },
-            'SA': { title: 'サ행 / ザ행', chars: ['サ', 'シ', 'ス', 'セ', 'ソ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'] },
-            'TA': { title: 'タ행 / ダ행', chars: ['タ', 'チ', 'ツ', 'テ', 'ト', 'ダ', 'ヂ', 'ヅ', 'デ', 'ド'] },
-            'NA': { title: 'ナ행', chars: ['ナ', 'ニ', 'ヌ', 'ネ', 'ノ'] },
-            'HA': { title: 'ハ행 / バ행 / パ행', chars: ['ハ', 'ヒ', 'フ', 'ヘ', 'ホ', 'バ', 'ビ', 'ブ', 'ベ', 'ボ', 'パ', 'ピ', 'プ', 'ペ', 'ポ'] },
-            'MA': { title: 'マ행', chars: ['マ', 'ミ', 'ム', 'メ', 'モ'] },
-            'YA': { title: 'ヤ행', chars: ['ヤ', 'ユ', 'ヨ'] },
-            'RA': { title: 'ラ행', chars: ['ラ', 'リ', 'ル', 'レ', 'ロ'] },
-            'WA': { title: 'ワ행 + ン', chars: ['ワ', 'ヲ', 'ン'] },
-            'smallKata': { title: '작은 문자', chars: ['ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ッ', 'ャ', 'ュ', 'ョ'] }
+            'a': { chars: ['あ', 'い', 'う', 'え', 'お'] },
+            'ka': { chars: ['か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'] },
+            'sa': { chars: ['さ', 'し', 'す', 'せ', 'そ', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ'] },
+            'ta': { chars: ['た', 'ち', 'つ', 'て', 'と', 'だ', 'ぢ', 'づ', 'で', 'ど'] },
+            'na': { chars: ['な', 'に', 'ぬ', 'ね', 'の'] },
+            'ha': { chars: ['は', 'ひ', 'ふ', 'へ', 'ほ', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'] },
+            'ma': { chars: ['ま', 'み', 'む', 'め', 'も'] },
+            'ya': { chars: ['や', 'ゆ', 'よ'] },
+            'ra': { chars: ['ら', 'り', 'る', 'れ', 'ろ'] },
+            'wa': { chars: ['わ', 'を', 'ん'] },
+            'A': { chars: ['ア', 'イ', 'ウ', 'エ', 'オ'] },
+            'KA': { chars: ['カ', 'キ', 'ク', 'ケ', 'コ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ'] },
+            'SA': { chars: ['サ', 'シ', 'ス', 'セ', 'ソ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'] },
+            'TA': { chars: ['タ', 'チ', 'ツ', 'テ', 'ト', 'ダ', 'ヂ', 'ヅ', 'デ', 'ド'] },
+            'NA': { chars: ['ナ', 'ニ', 'ヌ', 'ネ', 'ノ'] },
+            'HA': { chars: ['ハ', 'ヒ', 'フ', 'ヘ', 'ホ', 'バ', 'ビ', 'ブ', 'ベ', 'ボ', 'パ', 'ピ', 'プ', 'ペ', 'ポ'] },
+            'MA': { chars: ['マ', 'ミ', 'ム', 'メ', 'モ'] },
+            'YA': { chars: ['ヤ', 'ユ', 'ヨ'] },
+            'RA': { chars: ['ラ', 'リ', 'ル', 'レ', 'ロ'] },
+            'WA': { chars: ['ワ', 'ヲ', 'ン'] }
+        };
+
+        // 소문자 변환 매핑
+        const toSmallMap = {
+            // 히라가나
+            'あ': 'ぁ', 'い': 'ぃ', 'う': 'ぅ', 'え': 'ぇ', 'お': 'ぉ',
+            'や': 'ゃ', 'ゆ': 'ゅ', 'よ': 'ょ', 'つ': 'っ', 'わ': 'ゎ',
+            // 카타카나
+            'ア': 'ァ', 'イ': 'ィ', 'ウ': 'ゥ', 'エ': 'ェ', 'オ': 'ォ',
+            'ヤ': 'ャ', 'ユ': 'ュ', 'ヨ': 'ョ', 'ツ': 'ッ', 'ワ': 'ヮ'
         };
 
         function getCharClass(char) {
@@ -451,33 +528,48 @@
             event.target.classList.add('active');
         }
 
-        function showPopup(groupKey) {
+        function showSelector(key, groupKey) {
             const group = characterGroups[groupKey];
             if (!group) return;
             
-            const overlay = document.getElementById('popupOverlay');
-            const title = document.getElementById('popupTitle');
-            const grid = document.getElementById('popupGrid');
+            const selector = document.getElementById('dragSelector');
+            const grid = document.getElementById('selectorGrid');
             
-            title.textContent = group.title;
+            // 키 위치 계산
+            const keyRect = key.getBoundingClientRect();
+            
+            // 선택기 위치 설정 (키 위쪽에)
+            const left = keyRect.left + (keyRect.width / 2) - 100;
+            const top = keyRect.top - 80;
+            
+            selector.style.left = Math.max(10, Math.min(left, window.innerWidth - 210)) + 'px';
+            selector.style.top = Math.max(10, top) + 'px';
+            
+            // 문자 그리드 생성
             grid.innerHTML = '';
-            
             group.chars.forEach(char => {
-                const key = document.createElement('div');
-                key.className = 'popup-key ' + getCharClass(char);
-                key.textContent = char;
-                key.onclick = () => {
+                const charElement = document.createElement('div');
+                charElement.className = 'selector-char ' + getCharClass(char);
+                charElement.textContent = char;
+                charElement.onclick = () => {
                     insertText(char);
-                    closePopup();
+                    hideSelector();
                 };
-                grid.appendChild(key);
+                grid.appendChild(charElement);
             });
             
-            overlay.classList.add('active');
+            selector.classList.add('active');
+            selectorActive = true;
         }
 
-        function closePopup() {
-            document.getElementById('popupOverlay').classList.remove('active');
+        function hideSelector() {
+            const selector = document.getElementById('dragSelector');
+            selector.classList.remove('active');
+            selectorActive = false;
+            if (currentKey) {
+                currentKey.classList.remove('pressed');
+                currentKey = null;
+            }
         }
 
         function insertText(text) {
@@ -489,6 +581,43 @@
             
             textarea.value = before + text + after;
             textarea.selectionStart = textarea.selectionEnd = start + text.length;
+            lastInputPosition = start;
+            textarea.focus();
+        }
+
+        function convertToSmall() {
+            const textarea = document.getElementById('textInput');
+            const cursorPos = textarea.selectionStart;
+            
+            if (cursorPos > 0) {
+                const text = textarea.value;
+                const lastChar = text[cursorPos - 1];
+                
+                if (toSmallMap[lastChar]) {
+                    // 소문자로 변환 가능한 문자인 경우
+                    const smallChar = toSmallMap[lastChar];
+                    const before = text.substring(0, cursorPos - 1);
+                    const after = text.substring(cursorPos);
+                    
+                    textarea.value = before + smallChar + after;
+                    textarea.selectionStart = textarea.selectionEnd = cursorPos;
+                    
+                    // 변환 완료 피드백
+                    const convertKey = document.querySelector('.convert-key');
+                    convertKey.classList.add('last-input-highlight');
+                    setTimeout(() => {
+                        convertKey.classList.remove('last-input-highlight');
+                    }, 1000);
+                } else {
+                    // 변환할 수 없는 문자인 경우
+                    const convertKey = document.querySelector('.convert-key');
+                    const originalBg = convertKey.style.background;
+                    convertKey.style.background = '#f44336';
+                    setTimeout(() => {
+                        convertKey.style.background = originalBg;
+                    }, 200);
+                }
+            }
             textarea.focus();
         }
 
@@ -502,6 +631,7 @@
                 const after = textarea.value.substring(end);
                 textarea.value = before + after;
                 textarea.selectionStart = textarea.selectionEnd = before.length;
+                lastInputPosition = before.length;
             }
             textarea.focus();
         }
@@ -521,28 +651,175 @@
                 }, 2000);
             }).catch(function() {
                 document.execCommand('copy');
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✅ 복사됨!';
-                btn.style.background = '#4caf50';
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = '';
-                }, 2000);
             });
         }
 
         function clearText() {
             document.getElementById('textInput').value = '';
+            lastInputPosition = -1;
             document.getElementById('textInput').focus();
         }
 
-        // ESC키로 팝업 닫기
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePopup();
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            const keys = document.querySelectorAll('.key.has-variants');
+            const allKeys = document.querySelectorAll('.key');
+            
+            keys.forEach(key => {
+                const groupKey = key.dataset.group;
+                if (!groupKey) return;
+                
+                // 마우스 이벤트
+                key.addEventListener('mousedown', function(e) {
+                    if (selectorActive) return;
+                    e.preventDefault();
+                    
+                    isPressed = true;
+                    currentKey = key;
+                    key.classList.add('pressed');
+                    
+                    // 롱프레스 타이머
+                    pressTimer = setTimeout(() => {
+                        if (isPressed && currentKey === key) {
+                            showSelector(key, groupKey);
+                        }
+                    }, 300);
+                });
+                
+                key.addEventListener('mouseup', function(e) {
+                    clearTimeout(pressTimer);
+                    
+                    // 롱프레스 상태가 아닌 경우에만 짧은 클릭 처리
+                    if (!selectorActive && isPressed && currentKey === key) {
+                        // 짧은 클릭 - 첫 번째 문자 입력
+                        const group = characterGroups[groupKey];
+                        if (group && group.chars.length > 0) {
+                            insertText(group.chars[0]);
+                        }
+                        key.classList.remove('pressed');
+                        isPressed = false;
+                        currentKey = null;
+                    }
+                });
+                
+                key.addEventListener('mouseleave', function(e) {
+                    // 롱프레스 상태가 아닌 경우에만 정리
+                    if (!selectorActive) {
+                        clearTimeout(pressTimer);
+                        key.classList.remove('pressed');
+                        if (currentKey === key) {
+                            isPressed = false;
+                            currentKey = null;
+                        }
+                    }
+                });
+                
+                // 터치 이벤트
+                key.addEventListener('touchstart', function(e) {
+                    if (selectorActive) return;
+                    e.preventDefault();
+                    
+                    isPressed = true;
+                    currentKey = key;
+                    key.classList.add('pressed');
+                    
+                    pressTimer = setTimeout(() => {
+                        if (isPressed && currentKey === key) {
+                            showSelector(key, groupKey);
+                        }
+                    }, 300);
+                });
+                
+                key.addEventListener('touchend', function(e) {
+                    clearTimeout(pressTimer);
+                    
+                    // 롱프레스 상태가 아닌 경우에만 짧은 터치 처리
+                    if (!selectorActive && isPressed && currentKey === key) {
+                        const group = characterGroups[groupKey];
+                        if (group && group.chars.length > 0) {
+                            insertText(group.chars[0]);
+                        }
+                        key.classList.remove('pressed');
+                        isPressed = false;
+                        currentKey = null;
+                    }
+                    
+                    e.preventDefault();
+                });
+            });
+
+            // 모든 키에 클릭 이벤트 추가 (팝업 상태에서 다른 키 클릭시 팝업만 닫기)
+            allKeys.forEach(key => {
+                key.addEventListener('mousedown', function(e) {
+                    // 팝업이 활성화된 상태에서 다른 키를 클릭하면 팝업만 닫기 (입력 없음)
+                    if (selectorActive && !key.classList.contains('pressed')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        hideSelector();
+                        return false;
+                    }
+                });
+                
+                key.addEventListener('touchstart', function(e) {
+                    // 팝업이 활성화된 상태에서 다른 키를 터치하면 팝업만 닫기 (입력 없음)
+                    if (selectorActive && !key.classList.contains('pressed')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        hideSelector();
+                        return false;
+                    }
+                });
+            });
+        });
+
+        // 선택기 외부 클릭시 숨기기
+        document.addEventListener('mousedown', function(e) {
+            const selector = document.getElementById('dragSelector');
+            if (selectorActive && !selector.contains(e.target) && !e.target.classList.contains('key')) {
+                hideSelector();
             }
+        });
+
+        // 전역 mouseup으로 롱프레스 상태에서 선택기 닫기
+        document.addEventListener('mouseup', function(e) {
+            if (selectorActive) {
+                // 선택기 영역이 아닌 곳에서 mouseup이 발생하면 선택기 닫기
+                const selector = document.getElementById('dragSelector');
+                if (!selector.contains(e.target)) {
+                    hideSelector();
+                }
+            }
+        });
+
+        // 마우스 이동으로 문자 하이라이트
+        document.addEventListener('mousemove', function(e) {
+            if (!selectorActive) return;
+            
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            const charElement = elements.find(el => el.classList.contains('selector-char'));
+            
+            // 모든 하이라이트 제거
+            document.querySelectorAll('.selector-char.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+            
+            // 현재 문자 하이라이트
+            if (charElement) {
+                charElement.classList.add('highlighted');
+            }
+        });
+
+        // 선택기 내에서 마우스 업으로 선택 완료
+        document.addEventListener('mouseup', function(e) {
+            if (!selectorActive) return;
+            
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            const charElement = elements.find(el => el.classList.contains('selector-char'));
+            
+            if (charElement) {
+                insertText(charElement.textContent);
+            }
+            hideSelector();
         });
 
         window.onload = function() {
