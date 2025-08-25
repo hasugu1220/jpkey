@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 가상 키보드 (카톡 공유)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .text-area {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 18px;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', sans-serif;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .text-area:focus {
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .btn-kakao {
+            background: #fee500;
+            color: #3c1e1e;
+            border: 1px solid #fee500;
+        }
+
+        .btn-kakao:hover {
+            background: #fdd835;
+            transform: translateY(-2px);
+        }
+
+        .keyboard-modes {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .keyboard {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .key {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 24px;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: all 0.2s;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            user-select: none;
+        }
+
+        .key:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .key:active {
+            transform: translateY(0);
+            background: #bbdefb;
+        }
+
+        .key.has-variants::after {
+            content: "▼";
+            position: absolute;
+            bottom: 5px;
+            right: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .special-keys {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .special-key {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .special-key:hover {
+            background: #5a6fd8;
+        }
+
+        .wide-key {
+            min-width: 150px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 팝업 스타일 */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            min-width: 300px;
+        }
+
+        .popup-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .popup-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .popup-key {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-family: 'Noto Sans JP', sans-serif;
+            transition: all 0.2s;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-key:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: scale(1.05);
+        }
+
+        .popup-key.dakuten {
+            background: #ffecb3;
+            border-color: #ff9800;
+        }
+
+        .popup-key.handakuten {
+            background: #e1f5fe;
+            border-color: #03a9f4;
+        }
+
+        .popup-key.small {
+            background: #f3e5f5;
+            border-color: #9c27b0;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-popup:hover {
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .keyboard-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 10px;
+            }
+            
+            .key {
+                padding: 15px 10px;
+                font-size: 20px;
+                min-height: 60px;
+            }
+            
+            .popup {
+                margin: 20px;
+                min-width: 280px;
+            }
+            
+            .popup-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇯🇵 일본어 가상 키보드</h1>
+        
+        <div class="input-section">
+            <textarea id="textInput" class="text-area" placeholder="키를 누르면 관련 문자들이 팝업으로 나타납니다..."></textarea>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="copyText()">📋 복사</button>
+                <button class="btn btn-secondary" onclick="clearText()">🗑️ 지우기</button>
+                <button class="btn btn-kakao" onclick="shareToKakao()">💬 카톡 공유</button>
+            </div>
+        </div>
+
+        <div class="keyboard-modes">
+            <button class="mode-btn active" onclick="switchMode('hiragana')">ひらがな</button>
+            <button class="mode-btn" onclick="switchMode('katakana')">カタカナ</button>
+        </div>
+
+        <!-- 히라가나 키보드 -->
+        <div id="hiragana-keyboard" class="keyboard">
+            <div class="keyboard-grid">
+                <div class="key has-variants" onclick="showPopup('a')">あ</div>
+                <div class="key has-variants" onclick="showPopup('ka')">か</div>
+                <div class="key has-variants" onclick="showPopup('sa')">さ</div>
+                <div class="key has-variants" onclick="showPopup('ta')">た</div>
+                <div class="key has-variants" onclick="showPopup('na')">な</div>
+                
+                <div class="key has-variants" onclick="showPopup('ha')">は</div>
+                <div class="key has-variants" onclick="showPopup('ma')">ま</div>
+                <div class="key has-variants" onclick="showPopup('ya')">や</div>
+                <div class="key has-variants" onclick="showPopup('ra')">ら</div>
+                <div class="key has-variants" onclick="showPopup('wa')">わ</div>
+            </div>
+            
+            <div class="special-keys">
+                <div class="key special-key" onclick="insertText('、')">、</div>
+                <div class="key special-key" onclick="insertText('。')">。</div>
+                <div class="key special-key" onclick="insertText('ー')">ー</div>
+                <div class="key special-key has-variants" onclick="showPopup('small')">小文字</div>
+                <div class="key special-key wide-key" onclick="insertText(' ')">スペース</div>
+                <div class="key special-key" onclick="backspace()">⌫</div>
+            </div>
+        </div>
+
+        <!-- 카타카나 키보드 -->
+        <div id="katakana-keyboard" class="keyboard hidden">
+            <div class="keyboard-grid">
+                <div class="key has-variants" onclick="showPopup('A')">ア</div>
+                <div class="key has-variants" onclick="showPopup('KA')">カ</div>
+                <div class="key has-variants" onclick="showPopup('SA')">サ</div>
+                <div class="key has-variants" onclick="showPopup('TA')">タ</div>
+                <div class="key has-variants" onclick="showPopup('NA')">ナ</div>
+                
+                <div class="key has-variants" onclick="showPopup('HA')">ハ</div>
+                <div class="key has-variants" onclick="showPopup('MA')">マ</div>
+                <div class="key has-variants" onclick="showPopup('YA')">ヤ</div>
+                <div class="key has-variants" onclick="showPopup('RA')">ラ</div>
+                <div class="key has-variants" onclick="showPopup('WA')">ワ</div>
+            </div>
+            
+            <div class="special-keys">
+                <div class="key special-key" onclick="insertText('、')">、</div>
+                <div class="key special-key" onclick="insertText('。')">。</div>
+                <div class="key special-key" onclick="insertText('ー')">ー</div>
+                <div class="key special-key has-variants" onclick="showPopup('smallKata')">小문자</div>
+                <div class="key special-key wide-key" onclick="insertText(' ')">スペース</div>
+                <div class="key special-key" onclick="backspace()">⌫</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 오버레이 -->
+    <div class="popup-overlay" id="popupOverlay" onclick="closePopup()">
+        <div class="popup" onclick="event.stopPropagation()">
+            <button class="close-popup" onclick="closePopup()">×</button>
+            <div class="popup-title" id="popupTitle"></div>
+            <div class="popup-grid" id="popupGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'hiragana';
+        
+        const characterGroups = {
+            'a': { title: 'あ행', chars: ['あ', 'い', 'う', 'え', 'お'] },
+            'ka': { title: 'か행 / が행', chars: ['か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'] },
+            'sa': { title: 'さ행 / ざ행', chars: ['さ', 'し', 'す', 'せ', 'そ', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ'] },
+            'ta': { title: 'た행 / だ행', chars: ['た', 'ち', 'つ', 'て', 'と', 'だ', 'ぢ', 'づ', 'で', 'ど'] },
+            'na': { title: 'な행', chars: ['な', 'に', 'ぬ', 'ね', 'の'] },
+            'ha': { title: 'は행 / ば행 / ぱ행', chars: ['は', 'ひ', 'ふ', 'へ', 'ほ', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'] },
+            'ma': { title: 'ま행', chars: ['ま', 'み', 'む', 'め', 'も'] },
+            'ya': { title: 'や행', chars: ['や', 'ゆ', 'よ'] },
+            'ra': { title: 'ら행', chars: ['ら', 'り', 'る', 'れ', 'ろ'] },
+            'wa': { title: 'わ행 + ん', chars: ['わ', 'を', 'ん'] },
+            'small': { title: '작은 문자', chars: ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'っ', 'ゃ', 'ゅ', 'ょ'] },
+            'A': { title: 'ア행', chars: ['ア', 'イ', 'ウ', 'エ', 'オ'] },
+            'KA': { title: 'カ행 / ガ행', chars: ['カ', 'キ', 'ク', 'ケ', 'コ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ'] },
+            'SA': { title: 'サ행 / ザ행', chars: ['サ', 'シ', 'ス', 'セ', 'ソ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'] },
+            'TA': { title: 'タ행 / ダ행', chars: ['タ', 'チ', 'ツ', 'テ', 'ト', 'ダ', 'ヂ', 'ヅ', 'デ', 'ド'] },
+            'NA': { title: 'ナ행', chars: ['ナ', 'ニ', 'ヌ', 'ネ', 'ノ'] },
+            'HA': { title: 'ハ행 / バ행 / パ행', chars: ['ハ', 'ヒ', 'フ', 'ヘ', 'ホ', 'バ', 'ビ', 'ブ', 'ベ', 'ボ', 'パ', 'ピ', 'プ', 'ペ', 'ポ'] },
+            'MA': { title: 'マ행', chars: ['マ', 'ミ', 'ム', 'メ', 'モ'] },
+            'YA': { title: 'ヤ행', chars: ['ヤ', 'ユ', 'ヨ'] },
+            'RA': { title: 'ラ행', chars: ['ラ', 'リ', 'ル', 'レ', 'ロ'] },
+            'WA': { title: 'ワ행 + ン', chars: ['ワ', 'ヲ', 'ン'] },
+            'smallKata': { title: '작은 문자', chars: ['ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ッ', 'ャ', 'ュ', 'ョ'] }
+        };
+
+        function getCharClass(char) {
+            const dakuten = ['が', 'ぎ', 'ぐ', 'げ', 'ご', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ', 'だ', 'ぢ', 'づ', 'で', 'ど', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ', 'ダ', 'ヂ', 'ヅ', 'デ', 'ド', 'バ', 'ビ', 'ブ', 'ベ', 'ボ'];
+            const handakuten = ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ', 'パ', 'ピ', 'プ', 'ペ', 'ポ'];
+            const small = ['ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'っ', 'ゃ', 'ゅ', 'ょ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ッ', 'ャ', 'ュ', 'ョ'];
+            
+            if (dakuten.includes(char)) return 'dakuten';
+            if (handakuten.includes(char)) return 'handakuten';
+            if (small.includes(char)) return 'small';
+            return '';
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('hiragana-keyboard').classList.add('hidden');
+            document.getElementById('katakana-keyboard').classList.add('hidden');
+            document.getElementById(mode + '-keyboard').classList.remove('hidden');
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function showPopup(groupKey) {
+            const group = characterGroups[groupKey];
+            if (!group) return;
+            
+            const overlay = document.getElementById('popupOverlay');
+            const title = document.getElementById('popupTitle');
+            const grid = document.getElementById('popupGrid');
+            
+            title.textContent = group.title;
+            grid.innerHTML = '';
+            
+            group.chars.forEach(char => {
+                const key = document.createElement('div');
+                key.className = 'popup-key ' + getCharClass(char);
+                key.textContent = char;
+                key.onclick = () => {
+                    insertText(char);
+                    closePopup();
+                };
+                grid.appendChild(key);
+            });
+            
+            overlay.classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('active');
+        }
+
+        function insertText(text) {
+            const textarea = document.getElementById('textInput');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const before = textarea.value.substring(0, start);
+            const after = textarea.value.substring(end);
+            
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+            textarea.focus();
+        }
+
+        function backspace() {
+            const textarea = document.getElementById('textInput');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            
+            if (start > 0 || end > start) {
+                const before = textarea.value.substring(0, start - (start === end ? 1 : 0));
+                const after = textarea.value.substring(end);
+                textarea.value = before + after;
+                textarea.selectionStart = textarea.selectionEnd = before.length;
+            }
+            textarea.focus();
+        }
+
+        function copyText() {
+            const textarea = document.getElementById('textInput');
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value).then(function() {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 복사됨!';
+                btn.style.background = '#4caf50';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(function() {
+                document.execCommand('copy');
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 복사됨!';
+                btn.style.background = '#4caf50';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function clearText() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('textInput').focus();
+        }
+
+        function shareToKakao() {
+            const text = document.getElementById('textInput').value;
+            
+            if (!text.trim()) {
+                alert('공유할 텍스트를 먼저 입력해주세요!');
+                return;
+            }
+
+            // 모바일 환경에서 카카오톡 공유
+            if (navigator.share) {
+                navigator.share({
+                    title: '일본어 텍스트',
+                    text: text
+                }).then(() => {
+                    console.log('공유 성공');
+                }).catch((error) => {
+                    console.log('공유 실패:', error);
+                    fallbackShare(text);
+                });
+            } else {
+                fallbackShare(text);
+            }
+        }
+
+        function fallbackShare(text) {
+            // 카카오톡 URL 스킴 시도
+            const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(text)}`;
+            
+            // 새 창에서 카카오톡 URL 스킴 실행
+            const kakaoWindow = window.open(kakaoUrl, '_blank');
+            
+            // 잠시 후 창이 열리지 않으면 복사 기능으로 대체
+            setTimeout(() => {
+                if (kakaoWindow) {
+                    kakaoWindow.close();
+                }
+                
+                // 복사 후 안내 메시지
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('카카오톡이 설치되지 않았거나 실행할 수 없습니다.\n텍스트가 복사되었으니 직접 붙여넣기 해주세요!');
+                }).catch(() => {
+                    alert('카카오톡 공유에 실패했습니다.\n텍스트를 직접 복사해서 사용해주세요.');
+                });
+            }, 1000);
+        }
+
+        // ESC키로 팝업 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePopup();
+            }
+        });
+
+        window.onload = function() {
+            document.getElementById('textInput').focus();
+        };
+    </script>
+</body>
+</html>
