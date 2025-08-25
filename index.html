@@ -26,16 +26,16 @@
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 30px;
+            padding: 21px;
             width: 100%;
-            max-width: 900px;
+            max-width: 630px;
         }
 
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 20px;
-            font-size: 2em;
+            margin-bottom: 14px;
+            font-size: 1.4em;
         }
 
         .input-section {
@@ -44,11 +44,11 @@
 
         .text-area {
             width: 100%;
-            height: 60px;
-            padding: 15px;
+            height: 42px;
+            padding: 10.5px;
             border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 18px;
+            border-radius: 7px;
+            font-size: 12.6px;
             font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', sans-serif;
             resize: vertical;
             outline: none;
@@ -67,10 +67,10 @@
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 7px 14px;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 5.6px;
+            font-size: 9.8px;
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 600;
@@ -136,21 +136,21 @@
         .keyboard-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10.5px;
+            margin-bottom: 10.5px;
         }
 
         .key {
             background: white;
             border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px 15px;
+            border-radius: 8.4px;
+            padding: 14px 10.5px;
             text-align: center;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 16.8px;
             font-family: 'Noto Sans JP', sans-serif;
             transition: all 0.2s;
-            min-height: 70px;
+            min-height: 49px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -184,7 +184,7 @@
 
         .special-keys {
             display: flex;
-            gap: 15px;
+            gap: 10.5px;
             justify-content: center;
             flex-wrap: wrap;
         }
@@ -193,7 +193,7 @@
             background: #667eea;
             color: white;
             font-weight: 600;
-            min-width: 80px;
+            min-width: 56px;
         }
 
         .special-key:hover {
@@ -204,8 +204,8 @@
             background: #ff6b6b;
             color: white;
             font-weight: 600;
-            font-size: 20px;
-            min-width: 80px;
+            font-size: 14px;
+            min-width: 56px;
             position: relative;
         }
 
@@ -218,7 +218,7 @@
         }
 
         .wide-key {
-            min-width: 150px;
+            min-width: 105px;
         }
 
         .hidden {
@@ -474,6 +474,9 @@
         let selectorActive = false;
         let lastInputPosition = -1;
         
+        // 모바일 디바이스 감지
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        
         // 기본 문자만 포함 (탁음/반탁음 포함, 소문자는 제외)
         const characterGroups = {
             'a': { chars: ['あ', 'い', 'う', 'え', 'お'] },
@@ -485,7 +488,7 @@
             'ma': { chars: ['ま', 'み', 'む', 'め', 'も'] },
             'ya': { chars: ['や', 'ゆ', 'よ'] },
             'ra': { chars: ['ら', 'り', 'る', 'れ', 'ろ'] },
-            'wa': { chars: ['わ', 'を', 'ん'] },
+            'wa': { chars: ['わ', 'ゐ', 'ん'] },
             'A': { chars: ['ア', 'イ', 'ウ', 'エ', 'オ'] },
             'KA': { chars: ['カ', 'キ', 'ク', 'ケ', 'コ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ'] },
             'SA': { chars: ['サ', 'シ', 'ス', 'セ', 'ソ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'] },
@@ -529,8 +532,12 @@
         }
 
         function showSelector(key, groupKey) {
+            console.log('showSelector 호출됨:', groupKey);
             const group = characterGroups[groupKey];
-            if (!group) return;
+            if (!group) {
+                console.log('그룹을 찾을 수 없음:', groupKey);
+                return;
+            }
             
             const selector = document.getElementById('dragSelector');
             const grid = document.getElementById('selectorGrid');
@@ -552,6 +559,7 @@
                 charElement.className = 'selector-char ' + getCharClass(char);
                 charElement.textContent = char;
                 charElement.onclick = () => {
+                    console.log('문자 선택됨:', char);
                     insertText(char);
                     hideSelector();
                 };
@@ -560,6 +568,7 @@
             
             selector.classList.add('active');
             selectorActive = true;
+            console.log('셀렉터 활성화됨');
         }
 
         function hideSelector() {
@@ -582,7 +591,6 @@
             textarea.value = before + text + after;
             textarea.selectionStart = textarea.selectionEnd = start + text.length;
             lastInputPosition = start;
-            textarea.focus();
         }
 
         function convertToSmall() {
@@ -618,7 +626,6 @@
                     }, 200);
                 }
             }
-            textarea.focus();
         }
 
         function backspace() {
@@ -633,7 +640,6 @@
                 textarea.selectionStart = textarea.selectionEnd = before.length;
                 lastInputPosition = before.length;
             }
-            textarea.focus();
         }
 
         function copyText() {
@@ -657,11 +663,55 @@
         function clearText() {
             document.getElementById('textInput').value = '';
             lastInputPosition = -1;
-            document.getElementById('textInput').focus();
         }
 
         // 이벤트 리스너 설정
         document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('textInput');
+            
+            console.log('isMobile:', isMobile, 'innerWidth:', window.innerWidth);
+            
+            // 모바일에서 키보드 완전 비활성화
+            if (isMobile) {
+                console.log('모바일 모드 활성화');
+                
+                // readonly와 inputmode를 함께 사용하여 키보드 완전 차단
+                textarea.setAttribute('readonly', true);
+                textarea.setAttribute('inputmode', 'none');
+                
+                // 포커스 자체를 차단
+                textarea.addEventListener('focus', function(e) {
+                    console.log('포커스 이벤트 방지');
+                    e.preventDefault();
+                    e.target.blur();
+                }, true);
+                
+                // 터치 이벤트도 차단
+                textarea.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                });
+                
+                // 클릭 이벤트도 차단
+                textarea.addEventListener('click', function(e) {
+                    e.preventDefault();
+                });
+                
+                // 모든 입력 관련 이벤트 차단
+                textarea.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                });
+                
+                textarea.addEventListener('input', function(e) {
+                    e.preventDefault();
+                });
+                
+            } else {
+                console.log('PC 모드 활성화');
+                // PC에서는 정상적으로 입력 가능
+                textarea.removeAttribute('readonly');
+                textarea.removeAttribute('inputmode');
+            }
+            
             const keys = document.querySelectorAll('.key.has-variants');
             const allKeys = document.querySelectorAll('.key');
             
@@ -674,12 +724,14 @@
                     if (selectorActive) return;
                     e.preventDefault();
                     
+                    console.log('마우스 다운:', groupKey);
                     isPressed = true;
                     currentKey = key;
                     key.classList.add('pressed');
                     
                     // 롱프레스 타이머
                     pressTimer = setTimeout(() => {
+                        console.log('롱프레스 타이머 실행:', groupKey);
                         if (isPressed && currentKey === key) {
                             showSelector(key, groupKey);
                         }
@@ -687,6 +739,7 @@
                 });
                 
                 key.addEventListener('mouseup', function(e) {
+                    console.log('마우스 업:', groupKey, 'selectorActive:', selectorActive);
                     clearTimeout(pressTimer);
                     
                     // 롱프레스 상태가 아닌 경우에만 짧은 클릭 처리
@@ -694,6 +747,7 @@
                         // 짧은 클릭 - 첫 번째 문자 입력
                         const group = characterGroups[groupKey];
                         if (group && group.chars.length > 0) {
+                            console.log('짧은 클릭으로 문자 입력:', group.chars[0]);
                             insertText(group.chars[0]);
                         }
                         key.classList.remove('pressed');
@@ -821,10 +875,7 @@
             }
             hideSelector();
         });
-
-        window.onload = function() {
-            document.getElementById('textInput').focus();
-        };
     </script>
 </body>
 </html>
+                    
