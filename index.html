@@ -96,17 +96,6 @@
             transform: translateY(-2px);
         }
 
-        .btn-kakao {
-            background: #fee500;
-            color: #3c1e1e;
-            border: 1px solid #fee500;
-        }
-
-        .btn-kakao:hover {
-            background: #fdd835;
-            transform: translateY(-2px);
-        }
-
         .keyboard-modes {
             display: flex;
             gap: 15px;
@@ -344,7 +333,6 @@
             <div class="controls">
                 <button class="btn btn-primary" onclick="copyText()">📋 복사</button>
                 <button class="btn btn-secondary" onclick="clearText()">🗑️ 지우기</button>
-                <button class="btn btn-kakao" onclick="shareToKakao()">💬 카톡 공유</button>
             </div>
         </div>
 
@@ -548,52 +536,6 @@
         function clearText() {
             document.getElementById('textInput').value = '';
             document.getElementById('textInput').focus();
-        }
-
-        function shareToKakao() {
-            const text = document.getElementById('textInput').value;
-            
-            if (!text.trim()) {
-                alert('공유할 텍스트를 먼저 입력해주세요!');
-                return;
-            }
-
-            // 모바일 환경에서 카카오톡 공유
-            if (navigator.share) {
-                navigator.share({
-                    title: '일본어 텍스트',
-                    text: text
-                }).then(() => {
-                    console.log('공유 성공');
-                }).catch((error) => {
-                    console.log('공유 실패:', error);
-                    fallbackShare(text);
-                });
-            } else {
-                fallbackShare(text);
-            }
-        }
-
-        function fallbackShare(text) {
-            // 카카오톡 URL 스킴 시도
-            const kakaoUrl = `kakaotalk://send?text=${encodeURIComponent(text)}`;
-            
-            // 새 창에서 카카오톡 URL 스킴 실행
-            const kakaoWindow = window.open(kakaoUrl, '_blank');
-            
-            // 잠시 후 창이 열리지 않으면 복사 기능으로 대체
-            setTimeout(() => {
-                if (kakaoWindow) {
-                    kakaoWindow.close();
-                }
-                
-                // 복사 후 안내 메시지
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('카카오톡이 설치되지 않았거나 실행할 수 없습니다.\n텍스트가 복사되었으니 직접 붙여넣기 해주세요!');
-                }).catch(() => {
-                    alert('카카오톡 공유에 실패했습니다.\n텍스트를 직접 복사해서 사용해주세요.');
-                });
-            }, 1000);
         }
 
         // ESC키로 팝업 닫기
