@@ -601,8 +601,12 @@
             const after = textarea.value.substring(end);
             
             textarea.value = before + text + after;
-            textarea.selectionStart = textarea.selectionEnd = start + text.length;
-            lastInputPosition = start;
+            const newPosition = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newPosition;
+            lastInputPosition = newPosition;
+            
+            // 포커스를 다시 textarea에 설정하여 커서 위치 유지
+            textarea.focus();
         }
 
         function convertToSmall() {
@@ -621,6 +625,9 @@
                     
                     textarea.value = before + smallChar + after;
                     textarea.selectionStart = textarea.selectionEnd = cursorPos;
+                    
+                    // 포커스를 다시 textarea에 설정
+                    textarea.focus();
                     
                     // 변환 완료 피드백
                     const convertKey = document.querySelector('.convert-key');
@@ -646,11 +653,16 @@
             const end = textarea.selectionEnd;
             
             if (start > 0 || end > start) {
-                const before = textarea.value.substring(0, start - (start === end ? 1 : 0));
+                const deleteStart = start === end ? start - 1 : start;
+                const before = textarea.value.substring(0, deleteStart);
                 const after = textarea.value.substring(end);
                 textarea.value = before + after;
-                textarea.selectionStart = textarea.selectionEnd = before.length;
-                lastInputPosition = before.length;
+                const newPosition = deleteStart;
+                textarea.selectionStart = textarea.selectionEnd = newPosition;
+                lastInputPosition = newPosition;
+                
+                // 포커스를 다시 textarea에 설정하여 커서 위치 유지
+                textarea.focus();
             }
         }
 
